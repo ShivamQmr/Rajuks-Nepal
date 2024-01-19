@@ -8,13 +8,14 @@
   <style>
     body {
       padding-top: 20px;
+      margin: 20px;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <h2 class="text-center mb-4">Shivam's Departmental Store</h2>
-    <p class="text-center mb-4" style="background-color:rgb(109, 234, 226); border-radius: 5px;">Committed to worth it things!<br>Contact: store@shivamdepartstore.com | Phone: 9876543210, 98786541230</p>
+    <p class="text-center mb-4" style="background-color:rgb(109, 109, 234); border-radius: 5px;">Committed to worth it things!<br>Contact: store@shivamdepartstore.com | Phone: 9876543210, 98786541230</p>
 
     <!-- Customer Information -->
     <div class="card mb-4">
@@ -75,7 +76,7 @@
       <div class="card-header">Total Amount</div>
       <div class="card-body">
         <h5 id="totalAmount" class="card-title">Total: $0</h5>
-        <button type="button" class="btn btn-success" onclick="calculateTotalAndSave()">Calculate Total</button>
+        <button type="button" class="btn btn-success" onclick="calculateTotal()">Calculate Total</button>
       </div>
     </div>
 
@@ -119,11 +120,6 @@
         document.getElementById("productPrice").value = "";
         document.getElementById("productQuantity").value = 1;
       }
-    }
-
-    function calculateTotalAndSave() {
-      calculateTotal();
-      sendDataToServer();
     }
 
     function calculateTotal() {
@@ -175,38 +171,6 @@
       // Basic email validation using a regular expression
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return emailRegex.test(email);
-    }
-
-    function sendDataToServer() {
-      const emailInput = document.getElementById("customerEmail");
-      const emailError = document.getElementById("emailError");
-
-      if (!isValidEmail(emailInput.value)) {
-        emailError.textContent = "Invalid email address";
-        return;
-      } else {
-        emailError.textContent = "";
-      }
-
-      const billContent = generateBillContent();
-
-      // Create a FormData object to send data to the server
-      const formData = new FormData();
-      formData.append("customerEmail", emailInput.value);
-      formData.append("billContent", billContent);
-
-      // Use fetch API to send data to the server
-      fetch("save_to_database.php", {
-        method: "POST",
-        body: formData
-      })
-      .then(response => response.text())
-      .then(data => {
-        console.log(data); // Log the server response
-      })
-      .catch(error => {
-        console.error("Error:", error);
-      });
     }
   </script>
 </body>
