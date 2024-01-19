@@ -1,26 +1,213 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
-    <title>Registration System</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Billing System</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    body {
+      padding-top: 20px;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <form id="registrationForm" action="register.php" method="post">
-            <label for="username">Username:</label>
-            <input type="text" id="username" name="username" required>
+  <div class="container">
+    <h2 class="text-center mb-4">Shivam's Departmental Store</h2>
+    <p class="text-center mb-4" style="background-color:rgb(109, 234, 226); border-radius: 5px;">Committed to worth it things!<br>Contact: store@shivamdepartstore.com | Phone: 9876543210, 98786541230</p>
 
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" required>
-
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required>
-
-            <button type="submit">Register</button>
+    <!-- Customer Information -->
+    <div class="card mb-4">
+      <div class="card-header">Customer Information</div>
+      <div class="card-body">
+        <form>
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label for="customerName">Customer Name</label>
+              <input type="text" class="form-control" id="customerName" placeholder="Enter customer name">
+            </div>
+            <div class="form-group col-md-6">
+              <label for="customerEmail">Email</label>
+              <input type="email" class="form-control" id="customerEmail" placeholder="Enter customer email">
+              <small id="emailError" class="form-text text-danger"></small>
+            </div>
+          </div>
         </form>
+      </div>
     </div>
-    <script src="script.js"></script>
+
+    <!-- Product Information -->
+    <div class="card mb-4">
+      <div class="card-header">Product Information</div>
+      <div class="card-body">
+        <form>
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label for="productName">Product Name</label>
+              <input type="text" class="form-control" id="productName" placeholder="Enter product name">
+            </div>
+            <div class="form-group col-md-3">
+              <label for="productPrice">Price</label>
+              <input type="number" class="form-control" id="productPrice" placeholder="Enter product price">
+            </div>
+            <div class="form-group col-md-3">
+              <label for="productQuantity">Quantity</label>
+              <input type="number" class="form-control" id="productQuantity" placeholder="Enter quantity" value="1">
+            </div>
+          </div>
+          <button type="button" class="btn btn-primary" onclick="addProduct()">Add Product</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Display Cart -->
+    <div class="card mb-4">
+      <div class="card-header">Shopping Cart</div>
+      <div class="card-body">
+        <ul id="cartList" class="list-group">
+          <!-- Cart items will be displayed here -->
+        </ul>
+      </div>
+    </div>
+
+    <!-- Total Amount -->
+    <div class="card">
+      <div class="card-header">Total Amount</div>
+      <div class="card-body">
+        <h5 id="totalAmount" class="card-title">Total: $0</h5>
+        <button type="button" class="btn btn-success" onclick="calculateTotalAndSave()">Calculate Total</button>
+      </div>
+    </div>
+
+    <!-- Print/Download Button -->
+    <div class="mt-4">
+      <button type="button" class="btn btn-info mr-2" onclick="printBill()">Print Bill</button>
+      <button type="button" class="btn btn-secondary" onclick="downloadBill()">Download Bill</button>
+    </div>
+
+    <!-- Form for Saving to Database -->
+    <form id="billingForm" method="post" action="save_to_database.php" onsubmit="return validateForm()">
+      <input type="hidden" id="billContent" name="billContent">
+      <input type="hidden" id="customerEmail" name="customerEmail">
+    </form>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script>
+    let cart = [];
+
+    function addProduct() {
+      const productName = document.getElementById("productName").value;
+      const productPrice = parseFloat(document.getElementById("productPrice").value);
+      const productQuantity = parseInt(document.getElementById("productQuantity").value);
+
+      if (productName && !isNaN(productPrice) && productPrice > 0 && !isNaN(productQuantity) && productQuantity > 0) {
+        const product = { name: productName, price: productPrice, quantity: productQuantity };
+        cart.push(product);
+
+        // Display the product in the cart
+        const cartList = document.getElementById("cartList");
+        const listItem = document.createElement("li");
+        listItem.className = "list-group-item";
+        listItem.textContent = `${product.name} - $${product.price} x ${product.quantity}`;
+        cartList.appendChild(listItem);
+
+        // Clear the product input fields
+        document.getElementById("productName").value = "";
+        document.getElementById("productPrice").value = "";
+        document.getElementById("productQuantity").value = 1;
+      }
+    }
+
+    function calculateTotalAndSave() {
+      calculateTotal();
+      sendDataToServer();
+    }
+
+    function calculateTotal() {
+      const totalAmountElement = document.getElementById("totalAmount");
+      const totalAmount = cart.reduce((sum, product) => sum + product.price * product.quantity, 0);
+      totalAmountElement.textContent = `Total: $${totalAmount.toFixed(2)}`;
+    }
+
+    function printBill() {
+      window.print();
+    }
+
+    function downloadBill() {
+      const emailInput = document.getElementById("customerEmail");
+      const emailError = document.getElementById("emailError");
+
+      if (!isValidEmail(emailInput.value)) {
+        emailError.textContent = "Invalid email address";
+        return;
+      } else {
+        emailError.textContent = "";
+      }
+
+      const billContent = generateBillContent();
+      const blob = new Blob([billContent], { type: "text/plain" });
+      const link = document.createElement("a");
+
+      link.href = window.URL.createObjectURL(blob);
+      link.download = "bill.txt";
+      link.click();
+    }
+
+    function generateBillContent() {
+      let content = "Shopping Cart:\n\n";
+      cart.forEach((product, index) => {
+        content += `${index + 1}. ${product.name} - $${product.price} x ${product.quantity}\n`;
+      });
+
+      content += `\nTotal Amount: $${calculateTotalAmount().toFixed(2)}`;
+
+      return content;
+    }
+
+    function calculateTotalAmount() {
+      return cart.reduce((sum, product) => sum + product.price * product.quantity, 0);
+    }
+
+    function isValidEmail(email) {
+      // Basic email validation using a regular expression
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(email);
+    }
+
+    function sendDataToServer() {
+      const emailInput = document.getElementById("customerEmail");
+      const emailError = document.getElementById("emailError");
+
+      if (!isValidEmail(emailInput.value)) {
+        emailError.textContent = "Invalid email address";
+        return;
+      } else {
+        emailError.textContent = "";
+      }
+
+      const billContent = generateBillContent();
+
+      // Create a FormData object to send data to the server
+      const formData = new FormData();
+      formData.append("customerEmail", emailInput.value);
+      formData.append("billContent", billContent);
+
+      // Use fetch API to send data to the server
+      fetch("save_to_database.php", {
+        method: "POST",
+        body: formData
+      })
+      .then(response => response.text())
+      .then(data => {
+        console.log(data); // Log the server response
+      })
+      .catch(error => {
+        console.error("Error:", error);
+      });
+    }
+  </script>
 </body>
 </html>
