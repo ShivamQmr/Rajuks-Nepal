@@ -5,3 +5,4 @@ data = {
 }
 
 module.exports = data;
+console.log("Hi!")
